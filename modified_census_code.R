@@ -23,3 +23,38 @@ for (i in 1:nrow(Adult_Working)) {
   Adult_Working$Pct_Not_Working[i] <- sum(100, -(Adult_Working$Pct_Working[i]))
   Adult_Working$Pct_Not_Working_bach_or_more[i] <- sum(100, -(Adult_Working$Pct_Working_bach_or_more[i]))
 }
+
+vacancy_status <- read.csv("C:/Users/Mike/Documents/Practicum 2/vacancy_status.csv")
+
+### Creating a loop for vacancy_status >> Creating a new column for 
+### vancancy - seasonal >> to see if it is a better depiction
+i = 1
+for (i in 1:nrow(vacancy_status)) {
+  vacancy_status$Vacant_perm[i] <- sum(vacancy_status$Total_Vacant[i], -(vacancy_status$Seasonal[i]))
+  vacancy_status$vacancy_pct[i] <- (vacancy_status$Vacant_perm[i]/vacancy_status$Housing_Units[i])*100
+}
+## Cleaning up vacancy_status
+vacancy_status$For_rent <- NULL
+vacancy_status$Rented_not_oc <- NULL
+vacancy_status$For_sale <- NULL
+vacancy_status$Sale_not_oc <- NULL
+vacancy_status$Migrant_worker <- NULL
+vacancy_status$Other_vacant <- NULL
+vacancy_status$vacancy_pct <- format(round(vacancy_status$vacancy_pct, 1), nsmall = 1) 
+format(round(x, 2), nsmall = 2)
+
+## Writing vacancy_status to a csv >> to upload to github
+write.csv(vacancy_status, "C:/Users/Mike/Documents/Practicum 2/vacancy_status_accurate.csv")
+vacancy_status$Housing_Units <- NULL
+vacancy_status$Total_Vacant <- NULL
+vacancy_status$Seasonal <- NULL
+vacancy_status$Vacant_perm <- NULL
+### Creating dci_1 >> to get vacancy_status$Vacant_perm >> a more accurate number
+dci_1 <- merge(dci, vacancy_status, by="Zip_Code")
+dci_1$Vacancy <- NULL
+# Rearranging the columns & renaming vacancy_pct >> Vacancy
+dci_1 <- dci_1[,c(1,2,3,4,5,11,6,7,8,9,10)]
+colnames(dci_1)[colnames(dci_1)=="vacancy_pct"] <- "Vacancy"
+
+## Writing dci_1 to csv
+write.csv(dci_1, "C:/Users/Mike/Documents/Practicum 2/dci_1.csv", row.names = FALSE)
