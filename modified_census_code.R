@@ -50,10 +50,11 @@ vacancy_status$Seasonal <- NULL
 vacancy_status$Vacant_perm <- NULL
 ### Creating dci_1 >> to get vacancy_status$Vacant_perm >> a more accurate number
 dci_1 <- merge(dci, vacancy_status, by="Zip_Code")
-
+dci_1$X <- NULL
 # Rearranging the columns & renaming vacancy_pct >> Vacancy
-dci_1 <- dci_1[,c(1,2,3,4,5,11,6,7,8,9,10)]
+#dci_1 <- dci_1[,c(1,2,3,4,5,11,6,7,8,9,10,12)]
 colnames(dci_1)[colnames(dci_1)=="vacancy_pct"] <- "Vacancy"
 
 ## Writing dci_1 to csv
 #write.csv(dci_1, "C:/Users/Mike/Documents/Practicum 2/dci_1.csv", row.names = FALSE)
+
