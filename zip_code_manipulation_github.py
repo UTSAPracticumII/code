@@ -68,7 +68,45 @@ zip_code_data = None
 us_post = None
 zip_code_list = None
 
+###### Uploading the data file "dci_componenets.csv" that Steve created
+dci = pd.read_csv("C:/Users/Mike/Documents/Practicum 2/dci_components.csv", index_col=0)
+dci_zip_code = dci.iloc[:,0].tolist()
+# Getting the zip_codes we are using >> filtering our zipcodes using dci_zip_code
+master_zip_code = []
+for item in dci_zip_code:
+    for zip_code in us_post_list:
+        if zip_code in item:
+            master_zip_code.append(zip_code)
+
+# Filtering us_postal_codes using master_zip_codes 
+zip_code_data = us_postal_codes[us_postal_codes["Zip_Code"].isin(master_zip_code)]
+# Indexing out columns
+zip_code_data_2 = zip_code_data
+#zip_code_data_2 = zip_code_data_2.drop["Zip Code", 1]
+zip_code_data_2.drop(zip_code_data_2.columns[[0,5,6]], axis = 1, inplace = True)
+### Rearranging Columns
+zip_code_data_2 = zip_code_data_1[["Zip_Code", "Place Name", "State Abbreviation", "State", "County"]]
+
+##### Uploading vacancy_status >> To see if we can get a better vacancy rate for DCI
+vacancy_status = pd.read_csv("C:/Users/Mike/Documents/Practicum 2/vancany_status.csv")#, index_col=0)
+housing = pd.read_csv("C:/Users/Mike/Documents/Practicum 2/housing.csv")
+# Filtering vacancy_status using master_zip_codes 
+vacancy_status = vacancy_status[vacancy_status["Zip_Code"].isin(master_zip_code)]
+# Filtering housing using master_zip_codes 
+housing = housing[housing["Zip_Code"].isin(master_zip_code)]
+# Merging Housin_ units to vancany_status
+vacancy_status = pd.merge(vacancy_status, housing, on="Zip_Code", how = "outer")
+vacancy_status.drop(vacancy_status.columns[[10,11]], axis = 1, inplace = True)
+# Getting vacancy_status column names >> to rearrange the column names
+vacancy_headers = list(vacancy_status)
+vacancy_headers.insert(1, vacancy_headers.pop())
+# Rearranging the columns in vacancy_status
+vacancy_status = vacancy_status[vacancy_headers]
+
 # Wrting our results to CSV
 #zip_code_data.to_csv("C:/Users/Mike/Documents/Practicum 2/zip_code_data.csv", encoding="utf-8", index=False)
 ####zip_code_data_1.to_csv("C:/Users/Mike/Documents/Practicum 2/zip_code_data_1.csv", encoding="utf-8", index=False)
 zip_code_data_master.to_csv("C:/Users/Mike/Documents/Practicum 2/zip_code_data_master.csv", encoding="utf-8", index=False)
+
+zip_code_data_2.to_csv("C:/Users/Mike/Documents/Practicum 2/zip_code_data_2.csv", encoding="utf-8", index=False)
+#vacancy_status.to_csv("C:/Users/Mike/Documents/Practicum 2/vacancy_status.csv", encoding="utf-8", index=False)
