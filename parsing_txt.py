@@ -2,7 +2,7 @@
 """
 Created on Wed Jun 27 17:09:19 2018
 
-@author: Mike
+@author: Mike 
 
 This program is to read and parse text data >> from the: Random_Zips_EIG_info_test.txt (Practicum 2 folder)
 See data >> Random_Zips_EIG_info_test.txt >> for input data 
