@@ -1,0 +1,295 @@
+---
+title: "Plotting DCI"
+author: "Nathan Shepherd"
+date: "June 19, 2018"
+output:
+  word_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(ggplot2)
+library(dplyr)
+```
+
+```{r}
+dci = read.csv("C:/Users/Nathan/Desktop/DCIproject/data/DCI Components v2.5.csv")
+TXzip = dci[dci$State == "TX",] #Subset containing Texas zip codes
+SAzip = dci[dci$City == "San Antonio" & dci$State == "TX", ] #Subset containing San Antonio zip codes
+```
+
+
+```{r}
+#I tried to make statement/function that would add EIG rank (Prosperous, comfortable, etc) but was unsuccessful.  Went into DCI components csv and added them manually. New version "DCI Components v2.5.csv"   
+
+
+#rankLabel = if (dci$DCI == 0 & dci$DCI <= 4928) {
+#  return("Prosperous")
+#} else if (dci$DCI >= 4929 & dci$DCI <= 9857) {
+#  return("Comfortable")
+#} else if (dci$DCI >= 9858 & dci$DCI <= 14786) {
+#  return("Mid-tier")
+#} else if (dci$DCI >= 14787 & dci$DCI <= 19715) {
+#  return("At-risk")
+#} else if(dci$DCI >= 19716) {
+#  return("Distressed")
+#}
+
+#recode = function(x) {
+# if (x == 0 & x <= 4928) 
+#  return("Prosperous") else
+#  if (x >= 4929 & x <= 9857) 
+#    return("Comfortable") else
+#  if (x >= 9858 & x <= 14786) 
+#    return("Mid-tier") else
+#  if (x >= 14787 & x <= 19715) 
+#    return("At-risk") else
+#  if (x >= 19716) 
+#    return("Distressed")
+#} 
+```
+
+
+```{r}
+#Code from Dr. Malshe's homework 2
+
+ggplot(dci) +
+  geom_rect(aes(xmin = dci$DCI, xmax = Inf, fill = dci$Rank_Label), ymin = -Inf, ymax = Inf, data = dci) +
+  scale_fill_manual(breaks = dci$Rank_Label, values = c("sienna1", "skyblue1", "tomato4", "wheat1", "steelblue4")) +
+  #geom_vline(aes(xintercept = as.numeric(dci$Avg_Rank)), data = dci, color = "blue", alpha = 0.5) + 
+  #geom_text(aes(x = start, y = 2500, label = name), data = presidential, color = "white", angle = 90, size = 4, x = presidential$midpoint, hjust = 0, family = "Impact") + 
+  geom_point(aes(dci$DCI, dci$No_Diploma), color = "black", size = 1.25, alpha = 0.3) 
+  #scale_fill_manual(values = c("blue", "red"), legend_title) +
+  #scale_x_date(labels = date_format("%m-%Y"), breaks = presidential$start) +
+  #theme(axis.text.x = element_text(angle = 30, hjust = 1), panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_blank(), axis.line = element_line("black")) +
+  #labs(x = "Year", y = "Unemployment '000")
+
+
+ggplot(dci) +
+  geom_rect(aes(xmin = dci$DCI, xmax = Inf, fill = dci$Rank_Label), ymin = -Inf, ymax = Inf, data = dci) +
+  scale_fill_manual(breaks = dci$Rank_Label, values = c("sienna1", "skyblue1", "tomato4", "wheat1", "steelblue4")) +
+  #geom_vline(aes(xintercept = as.numeric(dci$Avg_Rank)), data = dci, color = "blue", alpha = 0.5) + 
+  #geom_text(aes(x = start, y = 2500, label = name), data = presidential, color = "white", angle = 90, size = 4, x = presidential$midpoint, hjust = 0, family = "Impact") + 
+  geom_point(aes(dci$Avg_Rank, dci$No_Diploma), color = "black", size = 1.25, alpha = 0.3) 
+  #scale_fill_manual(values = c("blue", "red"), legend_title) +
+  #scale_x_date(labels = date_format("%m-%Y"), breaks = presidential$start) +
+  #theme(axis.text.x = element_text(angle = 30, hjust = 1), panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_blank(), axis.line = element_line("black")) +
+  #labs(x = "Year", y = "Unemployment '000")
+
+```
+
+```{r}
+#This chunk I'm using for fixing current issues with the plots.
+#Current issues:
+#   DCI Index rectangles do not line up with x axis ticks
+#   X axis bar on the bottom extends beyond DCI index rectangles
+#   No legend for scatterplot points:  
+#     -First geom_point has show.legend = TRUE which puts scatterplot points onto the DCI index legend, doesn't show names of scatterplot        points. Does this for every geom_point
+#   Using raw scores and not transformed scores (0-100 scale)
+#   Maybe try to find how to outline dots so they stand out more
+
+
+
+#No High School Diploma DCI
+#US vs TX vs SA
+ggplot(dci) +
+  geom_rect(aes(xmin = dci$DCI, xmax = 25000, fill = dci$Rank_Label), ymin = -Inf, ymax = Inf, data = dci) +
+  scale_fill_manual(breaks = dci$Rank_Label, values = c("sienna1", "skyblue1", "tomato4", "wheat1", "steelblue4"), 'DCI Index') +
+  geom_point(aes(dci$DCI, dci$No_Diploma), color = "black", size = 1.25, alpha = 1, show.legend = TRUE) +
+  geom_point(aes(TXzip$DCI, TXzip$No_Diploma), color = "grey", size = 1.75, alpha = 0.8, data = TXzip) +
+  geom_point(aes(x = SAzip$DCI, y = SAzip$No_Diploma), data = SAzip, color = 'red', size = 2.25) +
+  scale_x_continuous() +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_blank(), axis.line = element_line("black")) +
+  labs(x = 'DCI', y = 'No Diploma', title = 'No HS Diploma US vs TX vs SA')
+
+```
+
+
+```{r}
+#Current example plots
+
+#No High School Diploma Raw DCI
+
+#US vs TX vs SA
+ggplot(dci) +
+  geom_rect(aes(xmin = dci$DCI, xmax = 25000, fill = dci$Rank_Label), ymin = -Inf, ymax = Inf, data = dci) +
+  scale_fill_manual(breaks = dci$Rank_Label, values = c("sienna1", "skyblue1", "tomato4", "wheat1", "steelblue4"), 'DCI Index') +
+  geom_point(aes(dci$DCI, dci$No_Diploma), color = "black", size = 1.25, alpha = 1, show.legend = TRUE) +
+  geom_point(aes(TXzip$DCI, TXzip$No_Diploma), color = "grey", size = 1.75, alpha = 0.8, data = TXzip) +
+  geom_point(aes(x = SAzip$DCI, y = SAzip$No_Diploma), data = SAzip, color = 'red', size = 2.25) +
+  scale_x_continuous() +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_blank(), axis.line = element_line("black")) +
+  labs(x = 'DCI', y = 'No Diploma', title = 'No HS Diploma US vs TX vs SA')
+
+#TX vs SA
+ggplot(dci) +
+  geom_rect(aes(xmin = dci$DCI, xmax = 25000, fill = dci$Rank_Label), ymin = -Inf, ymax = Inf, data = dci) +
+  scale_fill_manual(breaks = dci$Rank_Label, values = c("sienna1", "skyblue1", "tomato4", "wheat1", "steelblue4"), 'DCI Index') +
+  geom_point(aes(TXzip$DCI, TXzip$No_Diploma), color = "grey", size = 1.75, alpha = 0.8, data = TXzip) +
+  geom_point(aes(x = SAzip$DCI, y = SAzip$No_Diploma), data = SAzip, color = 'red', size = 2.25) +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_blank(), axis.line = element_line("black")) +
+  labs(x = 'DCI', y = 'No Diploma', title = 'No HS Diploma TX vs SA')
+
+#US
+ggplot(dci) +
+  geom_rect(aes(xmin = dci$DCI, xmax = 25000, fill = dci$Rank_Label), ymin = -Inf, ymax = Inf, data = dci) +
+  scale_fill_manual(breaks = dci$Rank_Label, values = c("sienna1", "skyblue1", "tomato4", "wheat1", "steelblue4"), 'DCI Index') +
+  geom_point(aes(dci$DCI, dci$No_Diploma), color = "black", size = 1.25, alpha = 0.3, show.legend = TRUE) +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_blank(), axis.line = element_line("black")) +
+  labs(x = 'DCI', y = 'No Diploma', title = 'No HS Diploma US')
+
+#TX
+ggplot(dci) +
+  geom_rect(aes(xmin = dci$DCI, xmax = 25000, fill = dci$Rank_Label), ymin = -Inf, ymax = Inf, data = dci) +
+  scale_fill_manual(breaks = dci$Rank_Label, values = c("sienna1", "skyblue1", "tomato4", "wheat1", "steelblue4"), 'DCI Index') +
+  geom_point(aes(TXzip$DCI, TXzip$No_Diploma), color = "grey", size = 1.25, alpha = 0.8, data = TXzip) +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_blank(), axis.line = element_line("black")) +
+  labs(x = 'DCI', y = 'No Diploma', title = 'No HS Diploma Texas')
+
+#SA
+ggplot(dci) +
+  geom_rect(aes(xmin = dci$DCI, xmax = 25000, fill = dci$Rank_Label), ymin = -Inf, ymax = Inf, data = dci) +
+  scale_fill_manual(breaks = dci$Rank_Label, values = c("sienna1", "skyblue1", "tomato4", "wheat1", "steelblue4")) +
+  geom_point(aes(SAzip$DCI, SAzip$No_Diploma), color = "red", size = 1.25, data = SAzip) +
+  labs(x = 'DCI', y = 'No Diploma', title = 'No HS Diploma San Antonio')
+```
+
+
+```{r}
+#No High School Diploma Average Rank
+
+#US vs TX vs SA
+ggplot(dci) +
+  geom_rect(aes(xmin = dci$DCI, xmax = 25000, fill = dci$Rank_Label), ymin = -Inf, ymax = Inf, data = dci) +
+  scale_fill_manual(breaks = dci$Rank_Label, values = c("sienna1", "skyblue1", "tomato4", "wheat1", "steelblue4"), 'DCI Index') +
+  geom_point(aes(dci$Avg_Rank, dci$No_Diploma), color = "black", size = 1.25, alpha = 0.3, show.legend = TRUE) +
+  geom_point(aes(TXzip$Avg_Rank, TXzip$No_Diploma), color = "grey", size = 1.75, alpha = 0.8, data = TXzip) +
+  geom_point(aes(x = SAzip$Avg_Rank, y = SAzip$No_Diploma), data = SAzip, color = 'red', size = 2.25) +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_blank(), axis.line = element_line("black")) +
+  labs(x = 'Average Rank', y = 'No Diploma', title = 'No HS Diploma US vs TX vs SA')
+
+#TX vs SA
+ggplot(dci) +
+  geom_rect(aes(xmin = dci$DCI, xmax = 25000, fill = dci$Rank_Label), ymin = -Inf, ymax = Inf, data = dci) +
+  scale_fill_manual(breaks = dci$Rank_Label, values = c("sienna1", "skyblue1", "tomato4", "wheat1", "steelblue4"), 'DCI Index') +
+  geom_point(aes(TXzip$Avg_Rank, TXzip$No_Diploma), color = "grey", size = 1.75, alpha = 0.8, data = TXzip) +
+  geom_point(aes(x = SAzip$Avg_Rank, y = SAzip$No_Diploma), data = SAzip, color = 'red', size = 2.25) +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_blank(), axis.line = element_line("black")) +
+  labs(x = 'Average Rank', y = 'No Diploma', title = 'No HS Diploma TX vs SA')
+
+#US
+ggplot(dci) +
+  geom_rect(aes(xmin = dci$DCI, xmax = 25000, fill = dci$Rank_Label), ymin = -Inf, ymax = Inf, data = dci) +
+  scale_fill_manual(breaks = dci$Rank_Label, values = c("sienna1", "skyblue1", "tomato4", "wheat1", "steelblue4"), 'DCI Index') +
+  geom_point(aes(dci$Avg_Rank, dci$No_Diploma), color = "black", size = 1.25, alpha = 0.3, show.legend = TRUE) +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_blank(), axis.line = element_line("black")) +
+  labs(x = 'Average Rank', y = 'No Diploma', title = 'No HS Diploma US')
+
+#TX
+ggplot(dci) +
+  geom_rect(aes(xmin = dci$DCI, xmax = 25000, fill = dci$Rank_Label), ymin = -Inf, ymax = Inf, data = dci) +
+  scale_fill_manual(breaks = dci$Rank_Label, values = c("sienna1", "skyblue1", "tomato4", "wheat1", "steelblue4"), 'DCI Index') +
+  geom_point(aes(TXzip$Avg_Rank, TXzip$No_Diploma), color = "grey", size = 1.25, alpha = 0.8, data = TXzip) +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_blank(), axis.line = element_line("black")) +
+  labs(x = 'Average Rank', y = 'No Diploma', title = 'No HS Diploma Texas')
+
+#SA
+ggplot(dci) +
+  geom_rect(aes(xmin = dci$DCI, xmax = 25000, fill = dci$Rank_Label), ymin = -Inf, ymax = Inf, data = dci) +
+  scale_fill_manual(breaks = dci$Rank_Label, values = c("sienna1", "skyblue1", "tomato4", "wheat1", "steelblue4")) +
+  geom_point(aes(SAzip$Avg_Rank, SAzip$No_Diploma), color = "red", size = 1.25, data = SAzip) +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_blank(), axis.line = element_line("black")) +
+  labs(x = 'Average Rank', y = 'No Diploma', title = 'No HS Diploma San Antonio')
+```
+
+
+
+```{r}
+#Vacancy DCI
+
+#US vs TX vs SA
+ggplot(dci) +
+  geom_rect(aes(xmin = dci$DCI, xmax = 25000, fill = dci$Rank_Label), ymin = -Inf, ymax = Inf, data = dci) +
+  scale_fill_manual(breaks = dci$Rank_Label, values = c("sienna1", "skyblue1", "tomato4", "wheat1", "steelblue4"), 'DCI Index') +
+  geom_point(aes(dci$DCI, dci$Vacancy), color = "black", size = 1.25, alpha = 0.3, show.legend = TRUE) +
+  geom_point(aes(TXzip$DCI, TXzip$Vacancy), color = "grey", size = 1.75, alpha = 0.8, data = TXzip) +
+  geom_point(aes(x = SAzip$DCI, y = SAzip$Vacancy), data = SAzip, color = 'red', size = 2.25) +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_blank(), axis.line = element_line("black")) +
+  labs(x = 'DCI', y = 'Vacancy', title = 'Vacancy US vs TX vs SA')
+
+#TX vs SA
+ggplot(dci) +
+  geom_rect(aes(xmin = dci$DCI, xmax = 25000, fill = dci$Rank_Label), ymin = -Inf, ymax = Inf, data = dci) +
+  scale_fill_manual(breaks = dci$Rank_Label, values = c("sienna1", "skyblue1", "tomato4", "wheat1", "steelblue4"), 'DCI Index') +
+  geom_point(aes(TXzip$DCI, TXzip$Vacancy), color = "grey", size = 1.75, alpha = 0.8, data = TXzip) +
+  geom_point(aes(x = SAzip$DCI, y = SAzip$Vacancy), data = SAzip, color = 'red', size = 2.25) +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_blank(), axis.line = element_line("black")) +
+  labs(x = 'DCI', y = 'Vacancy', title = 'Vacancy TX vs SA')
+
+#US
+ggplot(dci) +
+  geom_rect(aes(xmin = dci$DCI, xmax = 25000, fill = dci$Rank_Label), ymin = -Inf, ymax = Inf, data = dci) +
+  scale_fill_manual(breaks = dci$Rank_Label, values = c("sienna1", "skyblue1", "tomato4", "wheat1", "steelblue4"), 'DCI Index') +
+  geom_point(aes(dci$DCI, dci$Vacancy), color = "black", size = 1.25, alpha = 0.3, show.legend = TRUE) +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_blank(), axis.line = element_line("black")) +
+  labs(x = 'DCI', y = 'Vacancy', title = 'Vacancy US')
+
+#TX
+ggplot(dci) +
+  geom_rect(aes(xmin = dci$DCI, xmax = 25000, fill = dci$Rank_Label), ymin = -Inf, ymax = Inf, data = dci) +
+  scale_fill_manual(breaks = dci$Rank_Label, values = c("sienna1", "skyblue1", "tomato4", "wheat1", "steelblue4"), 'DCI Index') +
+  geom_point(aes(TXzip$DCI, TXzip$Vacancy), color = "grey", size = 1.25, alpha = 0.8, data = TXzip) +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_blank(), axis.line = element_line("black")) +
+  labs(x = 'DCI', y = 'Vacancy', title = 'Vacancy Texas')
+
+#SA
+ggplot(dci) +
+  geom_rect(aes(xmin = dci$DCI, xmax = 25000, fill = dci$Rank_Label), ymin = -Inf, ymax = Inf, data = dci) +
+  scale_fill_manual(breaks = dci$Rank_Label, values = c("sienna1", "skyblue1", "tomato4", "wheat1", "steelblue4")) +
+  geom_point(aes(SAzip$DCI, SAzip$Vacancy), color = "red", size = 1.25, data = SAzip) +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_blank(), axis.line = element_line("black")) +
+  labs(x = 'DCI', y = 'Vacancy', title = 'Vacancy San Antonio')
+```
+
+
+```{r}
+#From this point on it's just experiments
+ggplot(dci, aes(x = dci$No_Diploma, y = dci$DCI, fill = dci$Rank_Label, color = dci$Rank_Label)) +
+  geom_point(alpha = 0.3, size = 2)
+ggplot(dci, aes(x = dci$No_Diploma, y = dci$Avg_Rank, fill = dci$Rank_Label, color = dci$Rank_Label)) +
+  geom_point(alpha = 0.3, size = 2)
+
+  
+```
+
+```{r}
+ggplot(dci, aes(x = dci$Avg_Rank, fill = dci$No_Diploma, color = dci$Rank_Label)) +
+  geom_histogram()
+```
+
+```{r}
+ggplot(dci, aes(x = dci$Avg_Rank, y = dci$Vacancy_Rank, fill = dci$Rank_Label, color = dci$Rank_Label)) +
+  geom_point(alpha = 0.3, size = 2)
+```
+
+```{r}
+ggplot(TXzip, aes(x = DCI, y = No_Diploma)) +
+  geom_point(aes(color = City), data = TXzip)
+
+
+```
+
+
+```{r}
+
+```
+
+```{r}
+
+```
+
+```{r}
+
+```
+
