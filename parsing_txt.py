@@ -32,8 +32,6 @@ Rank_list = []
 for line in lines:
     if re.search("Economic Distress Indicators for", line):
         zipcode = line.strip()
-        print("Let's see:  ", zipcode)
-        mc_test = zipcode.split(": ",1)
         zipcode = zipcode.split(": ",1)[1]
         zipcode = zipcode.strip()
         zipcode = "Z"+zipcode
@@ -112,5 +110,19 @@ for i in range(len(zip_code)):
             +No_Job_list[i]+","+Poverty_list[i]+","+Med_Inc_list[i]+","+Chg_Job_list[i]+","+Chg_Biz_list[i]+","
             +Distress_Score_list[i]+","+Rank_list[i]+"\n")
 f.close()
+
+## To check all the values are parsed correctly
+print("There are ",(len(zip_code)),": observations for zipcode")
+print("There are ",(len(population)),": observations for popuation")
+print("There are ",(len(minority_list)),": observations for minority")
+print("There are ",(len(No_Diploma_list)),": observations for No_Diploma")
+print("There are ",(len(Vacancy_list)),": observations for Vacancy")
+print("There are ",(len(No_Job_list)),": observations for zipcode")
+print("There are ",(len(Poverty_list)),": observations for Poverty")
+print("There are ",(len(Med_Inc_list)),": observations for med_inc")
+print("There are ",(len(Chg_Job_list)),": observations for chg_job")
+print("There are ",(len(Chg_Biz_list)),": observations for zipcode")
+print("There are ",(len(Distress_Score_list)),": observations for Distress_Score")
+print("There are ",(len(Rank_list)),": observations for Rank")
 
 
