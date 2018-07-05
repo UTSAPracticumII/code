@@ -1,0 +1,280 @@
+---
+title: "Organize DCI data"
+author: "Steven J. Alexander"
+date: "June 14, 2018"
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+path = "C:/UTSA/DAP2/DCI/"
+
+# Read each download from the U.S. Census Bureau.  Interpret
+# data as character rather than a factor.
+
+# Non-numerical values (" ", "-", or "a") are missing data,
+# which we will handle at the appropriate step in the process
+
+adult_working_df = read.csv(file = paste0(path, "adult_working.csv"), 
+                            colClasses = "character")
+below_poverty_df = read.csv(file = paste0(path, "below_poverty.csv"), 
+                            colClasses = "character")
+bus_emp2011_df   = read.csv(file = paste0(path, "bus_emp2011.csv"), 
+                            colClasses = "character")
+bus_emp2015_df   = read.csv(file = paste0(path, "bus_emp2015.csv"), 
+                            colClasses = "character")
+housing_df       = read.csv(file = paste0(path, "housing.csv"), 
+                            colClasses = "character")
+hs_grad          = read.csv(file = paste0(path, "hs_grad.csv"), 
+                            colClasses = "character")
+med_inc_state_df = read.csv(file = paste0(path, "median_income_state.csv"), 
+                            colClasses = "character")
+med_inc_zipcd_df = read.csv(file = paste0(path, "median_income_zip_code.csv"), 
+                            colClasses = "character")
+population_df    = read.csv(file = paste0(path, "pop_est_11_15.csv"), 
+                            colClasses = "character")
+state_abbrev_df  = read.csv(file = paste0(path, "state_abbreviations.csv"), 
+                            colClasses = "character")
+vacancy_df       = read.csv(file = paste0(path, "vacancy.csv"))
+zip_code_df      = read.csv(file = paste0(path, "zip_code_data_1.csv"), 
+                            colClasses = "character")
+```
+
+```{r}
+# Population
+# Convert character to numeric
+population_df$Pop_2011_2015 = as.numeric(population_df$Pop_2011_2015)
+
+
+# DCI component 1: No high school diploma
+# Convert character to numeric, delete rows with missing data
+# Calculate percent WITHOUT diploma from percent WITH diploma
+hs_grad$Pct_HS_Grad2 = as.numeric(hs_grad$Pct_HS_Grad)
+hs_grad = hs_grad[!is.na(hs_grad$Pct_HS_Grad2),]
+hs_grad$no_hs_dip = 100 - hs_grad$Pct_HS_Grad2
+
+# DCI component 2: Housing vacancy rate
+# Delete rows with missing data, calculate net vacancies,
+vacancy_df = vacancy_df[!is.na(vacancy_df$All_Vacancy) &
+                        !is.na(vacancy_df$Seasonal),]
+vacancy_df$EIC_Vacancy = vacancy_df$All_Vacancy - vacancy_df$Seasonal
+
+# Convert housing units to numeric, delete rows with missing data,
+# change 0 to 1 to allow division
+housing_df$Housing_Units2 = as.numeric(housing_df$Housing_Units)
+housing_df = housing_df[!is.na(housing_df$Housing_Units2),]
+housing_df[housing_df$Housing_Units2 == 0, "Housing_Units2"] = 1
+
+# Match up vacancies with total units by zip code, calculate percent
+housing_df$Vacant_Units2 = vacancy_df[match(housing_df$Zip_Code,
+                                            vacancy_df$Zip_Code), 
+                                      "EIC_Vacancy"]
+housing_df$vac_pct = round(100 * housing_df$Vacant_Units2 / housing_df$Housing_Units2, 1)
+
+# DCI component 3: Adults not working
+# Convert character to numeric, delete rows with missing data
+# Calculate percent NOT working from percent working
+adult_working_df$Percent_Working2 = as.numeric(adult_working_df$Percent_Working)
+adult_working_df = adult_working_df[!is.na(adult_working_df$Percent_Working2),]
+adult_working_df$not_work = 100 - adult_working_df$Percent_Working2
+
+# DCI component 4: Poverty rate
+# Convert character to numeric, delete rows with missing data
+below_poverty_df$Percent_Poverty2 = as.numeric(below_poverty_df$Percent_Poverty)
+below_poverty_df = below_poverty_df[!is.na(below_poverty_df$Percent_Poverty2),]
+```
+
+```{r}
+# DCI component 5: Median income ratio
+
+# Replace state name with state abbreviation in med_inc_state_df
+med_inc_state_df$ST = state_abbrev_df[match(med_inc_state_df$State, 
+                                            state_abbrev_df$state_names), 
+                                      "state_abbr"]
+med_inc_state_df$ST[med_inc_state_df$State == "District of Columbia"] = "DC"
+med_inc_state_df$ST[med_inc_state_df$State == "Puerto Rico"] = "PR"
+
+# Add state abbreviations to med_inc_zipcd_df
+med_inc_zipcd_df$ST = zip_code_df[match(med_inc_zipcd_df$Zip_Code,
+                                        zip_code_df$Zip_Code), 
+                                  "State.Abbreviation"]
+med_inc_zipcd_df$ST[med_inc_zipcd_df$Zip_Code < "Z01000"] = "PR"
+
+# Add state median income to med_inc_zipcd_df
+med_inc_zipcd_df$State_Med_Inc = med_inc_state_df[match(med_inc_zipcd_df$ST,
+                                                        med_inc_state_df$ST),
+                                                  "Median_Income"]
+
+# Eliminate rows with missing median income for zip code or state
+med_inc_zipcd_df$Median_Income2 = as.numeric(med_inc_zipcd_df$Median_Income)
+med_inc_zipcd_df$State_Med_Inc2 = as.numeric(med_inc_zipcd_df$State_Med_Inc)
+med_inc_zipcd_df = med_inc_zipcd_df[!is.na(med_inc_zipcd_df$Median_Income2) &
+                                    !is.na(med_inc_zipcd_df$State_Med_Inc2) &
+                                    med_inc_zipcd_df$State_Med_Inc2 > 0,]
+
+# Calculate percentage
+med_inc_zipcd_df$Med_Inc_Pct = round(100 * med_inc_zipcd_df$Median_Income2 /
+                                     med_inc_zipcd_df$State_Med_Inc2, 1)
+```
+
+```{r}
+# DCI component 6: Change in employment
+
+# Convert Place ("Z78201 (San Antonio, TX)") to Zip_Code ("Z78201)
+bus_emp2011_df$Zip_Code = substr(bus_emp2011_df$Place, 1, 6)
+bus_emp2015_df$Zip_Code = substr(bus_emp2015_df$Place, 1, 6)
+
+# Create new data frame with data from 2011 and 2015
+employment_df = bus_emp2011_df[,c("Zip_Code","Employment2011")]
+employment_df$Employment2015 = bus_emp2015_df[match(employment_df$Zip_Code,
+                                                    bus_emp2015_df$Zip_Code),
+                                              "Employment2015"]
+
+# Eliminate rows with missing job numbers from 2011 or 2015
+employment_df$Jobs2011 = as.numeric(employment_df$Employment2011)
+employment_df$Jobs2015 = as.numeric(employment_df$Employment2015)
+employment_df = employment_df[!is.na(employment_df$Jobs2011) &
+                              !is.na(employment_df$Jobs2015) &
+                              employment_df$Jobs2011 > 0,]
+
+# Calculate percentage change
+employment_df$Pct_Chg = round(100 * employment_df$Jobs2015 /
+                              employment_df$Jobs2011, 1) - 100
+```
+
+
+```{r}
+# DCI component 7: Change in employment
+
+# Create new data frame with data from 2011 and 2015
+business_df = bus_emp2011_df[,c("Zip_Code","Business2011")]
+business_df$Business2015 = bus_emp2015_df[match(business_df$Zip_Code,
+                                                bus_emp2015_df$Zip_Code),
+                                          "Business2015"]
+
+# Eliminate rows with missing job numbers from 2011 or 2015
+business_df$Bus2011 = as.numeric(business_df$Business2011)
+business_df$Bus2015 = as.numeric(business_df$Business2015)
+business_df = business_df[!is.na(business_df$Bus2011) &
+                              !is.na(business_df$Bus2015) &
+                              business_df$Bus2011 > 0,]
+
+# Calculate percentage change
+business_df$Pct_Chg = round(100 * business_df$Bus2015 /
+                              business_df$Bus2011, 1) - 100
+```
+
+```{r}
+# Combine all DCI components
+# Zip code, city, state, population, DCI 1 - 7
+
+dci_df = zip_code_df[, c("Zip_Code", "Place.Name", "State.Abbreviation")]
+colnames(dci_df) = c("Zip_Code","City","State")
+
+dci_df$Population = population_df[match(dci_df$Zip_Code,
+                                        population_df$Zip_Code),
+                                  "Pop_2011_2015"]
+dci_df = dci_df[dci_df$Population >= 500,]
+
+dci_df$No_Diploma = hs_grad[match(dci_df$Zip_Code,
+                                  hs_grad$Zip_Code),
+                            "no_hs_dip"]
+
+dci_df$Vacancy = housing_df[match(dci_df$Zip_Code, 
+                                  housing_df$Zip_Code), 
+                            "vac_pct"]
+
+dci_df$No_Job = adult_working_df[match(dci_df$Zip_Code, 
+                                       adult_working_df$Zip_Code),
+                                 "not_work"]
+
+dci_df$Poverty = below_poverty_df[match(dci_df$Zip_Code, 
+                                        below_poverty_df$Zip_Code), 
+                                  "Percent_Poverty2"]
+
+dci_df$Med_Inc = med_inc_zipcd_df[match(dci_df$Zip_Code,
+                                        med_inc_zipcd_df$Zip_Code),
+                                  "Med_Inc_Pct"]
+
+dci_df$Chg_Job = employment_df[match(dci_df$Zip_Code,
+                                     employment_df$Zip_Code),
+                               "Pct_Chg"]
+
+dci_df$Chg_Biz = business_df[match(dci_df$Zip_Code,
+                                   business_df$Zip_Code),
+                             "Pct_Chg"]
+
+# Delete rows with missing data in 6 of the DCI components
+dci_df = dci_df[!is.na(dci_df$No_Diploma) &
+                !is.na(dci_df$Vacancy) &
+                !is.na(dci_df$No_Job) &
+                !is.na(dci_df$Poverty) &
+                !is.na(dci_df$Med_Inc) &
+#                !is.na(dci_df$Chg_Job) &
+                !is.na(dci_df$Chg_Biz), ]
+
+# If Chg_Job is missing, set it to the value for Chg_Biz
+dci_df$Chg_Job[is.na(dci_df$Chg_Job)] = dci_df$Chg_Biz[is.na(dci_df$Chg_Job)]
+```
+
+```{r}
+# Calculate rankings
+
+# Low percentages are better
+dci_df = dci_df[order(dci_df$No_Diploma),]
+dci_df$No_Diploma_Rank = c(1:nrow(dci_df))
+dci_df[is.na(dci_df$No_Diploma), "No_Diploma_Rank"] = NA
+
+# Low percentages are better
+dci_df = dci_df[order(dci_df$Vacancy),]
+dci_df$Vacancy_Rank = c(1:nrow(dci_df))
+dci_df[is.na(dci_df$Vacancy), "Vacancy_Rank"] = NA
+
+# Low percentages are better
+dci_df = dci_df[order(dci_df$No_Job),]
+dci_df$No_Job_Rank = c(1:nrow(dci_df))
+dci_df[is.na(dci_df$No_Job), "No_Job_Rank"] = NA
+
+# Low percentages are better
+dci_df = dci_df[order(dci_df$Poverty),]
+dci_df$Poverty_Rank = c(1:nrow(dci_df))
+dci_df[is.na(dci_df$Poverty), "Poverty_Rank"] = NA
+
+# High percentages are better
+dci_df = dci_df[order(-dci_df$Med_Inc),]
+dci_df$Med_Inc_Rank = c(1:nrow(dci_df))
+dci_df[is.na(dci_df$Med_Inc), "Med_Inc_Rank"] = NA
+
+# High percentages are better
+dci_df = dci_df[order(-dci_df$Chg_Job),]
+dci_df$Chg_Job_Rank = c(1:nrow(dci_df))
+dci_df[is.na(dci_df$Chg_Job), "Chg_Job_Rank"] = NA
+
+# High percentages are better
+dci_df = dci_df[order(-dci_df$Chg_Biz),]
+dci_df$Chg_Biz_Rank = c(1:nrow(dci_df))
+dci_df[is.na(dci_df$Chg_Biz), "Chg_Biz_Rank"] = NA
+
+dci_df$Avg_Rank = rowMeans(x = dci_df[,c(12:18)], na.rm = TRUE)
+dci_df = dci_df[order(dci_df$Avg_Rank),]
+dci_df$DCI_Rank = c(1:nrow(dci_df))
+
+dci_df$DCI_Percentile = round(100 * dci_df$DCI_Rank / nrow(dci_df), 1)
+
+Rank_Labels = c("Prosperous", "Comfortable", "Mid-tier", "At risk", "Distressed", "Distressed")
+dci_df$Rank_Label = sapply(X = dci_df$DCI_Percentile, function(x) Rank_Labels[trunc(x/20,0)+1])
+
+Decile_Labels = c("Prosperous 1", "Prosperous 2", "Comfortable 3", "Comfortable 4", "Mid-tier 5",
+                  "Mid-tier 6", "At risk 7", "At risk 8", "Distressed 9", "Distressed 10",
+                  "Distressed 10")
+dci_df$Decile_Label = sapply(X = dci_df$DCI_Percentile, function(x) Decile_Labels[trunc(x/10,0)+1])
+```
+
+
+```{r}
+dci_df = dci_df[order(dci_df$Zip_Code),]
+write.csv(x = dci_df, file = paste0(path, "DCI Components v5.csv"), row.names = FALSE)
+```
