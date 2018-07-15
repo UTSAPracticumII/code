@@ -1,0 +1,98 @@
+---
+title: "DCI Graphs"
+author: "Steven J. Alexander"
+date: "July 15, 2018"
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(ggplot2)
+```
+
+```{r}
+path = "C:/UTSA/DAP2/DCI/"
+dci_df = read.csv(file = paste0(path, "DCI Components v7.csv"))
+dci_df$SA = ifelse(dci_df$City == "San Antonio" & dci_df$State == "TX", 1, 0)
+```
+
+```{r}
+ggplot(data = dci_df, aes(x = No_Diploma_Rank, y = No_Diploma)) + 
+  geom_point(aes(color = as.factor(SA), size = as.factor(SA))) +
+  scale_color_manual(values = c("0"="black", "1"="red")) +
+  scale_size_manual(values = c("0"=0.5, "1"=1.5)) +
+  labs(x = "Rank of Zip Codes (San Antonio in red)", 
+       y = "Percent of Adults with No High School Diploma") +
+  theme(legend.position = "none")
+```
+
+```{r}
+ggplot(data = dci_df, aes(x = Vacancy_Rank, y = Vacancy)) + 
+  geom_point(aes(color = as.factor(SA), size = as.factor(SA))) +
+  scale_color_manual(values = c("0"="black", "1"="red")) +
+  scale_size_manual(values = c("0"=0.5, "1"=1.5)) +
+  labs(x = "Rank of Zip Codes (San Antonio in red)", 
+       y = "Percent of Housing Units That Are Vacant") +
+  theme(legend.position = "none")
+```
+
+```{r}
+ggplot(data = dci_df, aes(x = No_Job_Rank, y = No_Job)) + 
+  geom_point(aes(color = as.factor(SA), size = as.factor(SA))) +
+  scale_color_manual(values = c("0"="black", "1"="red")) +
+  scale_size_manual(values = c("0"=0.5, "1"=1.5)) +
+  labs(x = "Rank of Zip Codes (San Antonio in red)", 
+       y = "Percent of Adults Who Are Unemployed") +
+  theme(legend.position = "none")
+```
+
+```{r}
+ggplot(data = dci_df, aes(x = Poverty_Rank, y = Poverty)) + 
+  geom_point(aes(color = as.factor(SA), size = as.factor(SA))) +
+  scale_color_manual(values = c("0"="black", "1"="red")) +
+  scale_size_manual(values = c("0"=0.5, "1"=1.5)) +
+  labs(x = "Rank of Zip Codes (San Antonio in red)", 
+       y = "Percent of People Living Below the Poverty Line") +
+  theme(legend.position = "none")
+```
+
+```{r}
+ggplot(data = dci_df, aes(x = Med_Inc_Rank, y = Med_Inc)) + 
+  geom_point(aes(color = as.factor(SA), size = as.factor(SA))) +
+  scale_color_manual(values = c("0"="black", "1"="red")) +
+  scale_size_manual(values = c("0"=0.5, "1"=1.5)) +
+  labs(x = "Rank of Zip Codes (San Antonio in red)", 
+       y = "Median Income within Zip Code\nCompared to Median Income for State") +
+  theme(legend.position = "none")
+```
+
+```{r}
+ggplot(data = dci_df[dci_df$Chg_Job_Rank > 400,], aes(x = Chg_Job_Rank, y = Chg_Job)) + 
+  geom_point(aes(color = as.factor(SA), size = as.factor(SA))) +
+  scale_color_manual(values = c("0"="black", "1"="red")) +
+  scale_size_manual(values = c("0"=0.5, "1"=1.5)) +
+  labs(x = "Rank of Zip Codes, Starting with 401 (San Antonio in red)", 
+       y = "Percent Change in Number of Jobs (2011 - 2015)") +
+  theme(legend.position = "none")
+```
+
+```{r}
+ggplot(data = dci_df[dci_df$Chg_Biz_Rank > 100,], aes(x = Chg_Biz_Rank, y = Chg_Biz)) + 
+  geom_point(aes(color = as.factor(SA), size = as.factor(SA))) +
+  scale_color_manual(values = c("0"="black", "1"="red")) +
+  scale_size_manual(values = c("0"=0.5, "1"=1.5)) +
+  labs(x = "Rank of Zip Codes, Starting with 101 (San Antonio in red)", 
+       y = "Percent Change in Number of Businesses (2011 - 2015)") +
+  theme(legend.position = "none")
+```
+
+```{r}
+ggplot(data = dci_df, aes(x = DCI_Rank, y = Avg_Rank)) + 
+  geom_point(aes(color = as.factor(SA), size = as.factor(SA))) +
+  scale_color_manual(values = c("0"="black", "1"="red")) +
+  scale_size_manual(values = c("0"=0.5, "1"=1.5)) +
+  labs(x = "Rank of Zip Codes (San Antonio in red)", 
+       y = "Average of 7 Component Ranks") +
+  coord_fixed() +
+  theme(legend.position = "none")
+```
